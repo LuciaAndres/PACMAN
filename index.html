@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="autor" content = "Lucas Joglar y Lucía Andrés"/>
-    <title>El Juego de la Vida</title>
+    <title>Waka waka eh eh</title>
     <style>
         body {
             background-color: palevioletred;
@@ -28,7 +28,7 @@
             gap: 20px;
         }
         .canvas-principal {
-            background-color: darkblue;
+            /*background-color: darkblue;*/
             position: relative;
             width: 560px;
             height: 620px;
@@ -46,9 +46,18 @@
         <h1>Pac Man??</h1>
     </div>
     <div class="contenedora">
-        <div class="canvas-principal"></div>
+        <div class="canvas-principal">
+            <canvas id="juego"></canvas>
+            <div style="display:none;">
+                <img
+                  id="source"
+                  src="./Pacman Sprites/mapa.png"
+                  width="300"
+                  height="227" />
+              </div>
+        </div>
     </div>
-
     
 </body>
+<script src="pacman.js"></script>
 </html>
