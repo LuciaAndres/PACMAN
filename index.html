@@ -7,7 +7,7 @@
     <title>Waka waka eh eh</title>
     <style>
         body {
-            background-color: palevioletred;
+            background-color: grey;
             color: white;
             margin: 0;
             font-family: Arial, sans-serif;
@@ -28,10 +28,10 @@
             gap: 20px;
         }
         .canvas-principal {
-            /*background-color: darkblue;*/
+            background-color: black;
             position: relative;
-            width: 560px;
-            height: 620px;
+            width: 448px;
+            height: 576px;
             border: 2px solid black;
         }
         
@@ -47,16 +47,20 @@
     </div>
     <div class="contenedora">
         <div class="canvas-principal">
-            <canvas id="juego"></canvas>
+            <canvas id="canvas-principal" width="448 " height="576"></canvas>
             <div style="display:none;">
                 <img
-                  id="source"
+                  id="map"
                   src="./Pacman Sprites/mapa.png"
-                  width="300"
-                  height="227" />
+                />
+                <img
+                 id = "spritesheet"
+                 src = "./Pacman Sprites/personajes.png"
+                 />
               </div>
         </div>
     </div>
+    <script src="world.js"></script>
     <script src="pacman.js"></script>
 </body>
 </html>
