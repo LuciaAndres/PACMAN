@@ -4,6 +4,9 @@ class Mundo {
         this.ctx = this.canvas.getContext("2d");
         this.image = document.getElementById("map");
 
+        this.gridWidth = 16;
+        this.gridHeight = 16;
+
         this.pacman;
         this.blinky;
         this.pinky;
@@ -27,10 +30,10 @@ class Mundo {
             [0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
             [0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0],
             [0,0,0,0,0,0,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
-            [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
-            [1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1],
-            [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,1,0,0,0,2,2,0,0,0,1,0,0,1,0,0,0,0,0,0],
+            [0,0,0,0,0,0,1,0,0,1,0,2,2,2,2,2,2,0,1,0,0,1,0,0,0,0,0,0],
+            [1,1,1,1,1,1,1,1,1,1,0,2,2,2,2,2,2,0,1,1,1,1,1,1,1,1,1,1],
+            [0,0,0,0,0,0,1,0,0,1,0,2,2,2,2,2,2,0,1,0,0,1,0,0,0,0,0,0],
             [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
             [0,0,0,0,0,0,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,0,0],
             [0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0],
@@ -68,17 +71,14 @@ class Mundo {
         this.ctx.strokeStyle = "green";
         this.ctx.lineWidth = 1;
 
-        const gridWidth = 16;
-        const gridHeight = 16;
-
-        for (let x = 0; x < this.canvas.width; x += gridWidth) {
+        for (let x = 0; x < this.canvas.width; x += this.gridWidth) {
             this.ctx.beginPath();
             this.ctx.moveTo(x, 0);
             this.ctx.lineTo(x, this.canvas.height);
             this.ctx.stroke();
         }
 
-        for (let y = 0; y < this.canvas.height; y += gridHeight) {
+        for (let y = 0; y < this.canvas.height; y += this.gridHeight) {
             this.ctx.beginPath();
             this.ctx.moveTo(0, y);
             this.ctx.lineTo(this.canvas.width, y);
@@ -92,105 +92,160 @@ class Mundo {
                     // Set the fill color based on transparency value
                     if (transparencyValue === 0) {
                         this.ctx.fillStyle = "rgba(255, 0, 255, 0.5)"; // Blue for transparency 0
-                    } else {
+                    } else if(transparencyValue === 1){
                         this.ctx.fillStyle = "rgba(169, 169, 169, 0.5)"; // Gray for transparency 1
+                    } else{
+                        this.ctx.fillStyle = "rgba(10, 29, 196, 0.5)";
                     }
     
                     // Draw the square at the correct position
-                    this.ctx.fillRect(col * gridWidth, row * gridHeight, gridWidth, gridHeight);
+                    this.ctx.fillRect(col * this.gridWidth, row * this.gridHeight, this.gridWidth, this.gridHeight);
                 }
             }
         
     }
 }
 
-class Pacman
-{
+class Pacman {
     constructor(mundo) {
         this.mundo = mundo;
-        this.x = 224; // Starting X position
-        this.y = 326; // Starting Y position
-        this.speed = 2; // Speed of movement
-        this.direction = "right"; // Initial movement direction
-        this.size = 16; // Pacman size (to match the grid)
-        this.moving = false; // Pacman starts stopped
+        this.gridSize = this.mundo.gridHeight;
 
-        // Listen for key presses to change direction
+        this.gridX = 14; // Starting grid column
+        this.gridY = 20;
+
+        this.speed = 1.8; 
+        this.direction = "right";
+        this.nextDirections = []; // Queue for buffered directions
+        this.size = 16; 
+        this.moving = false; 
+
+        this.x = this.gridX * this.gridSize + this.gridSize / 2;
+        this.y = this.gridY * this.gridSize + this.gridSize / 2;
+
         window.addEventListener("keydown", this.changeDirection.bind(this));
 
-        // Start the animation loop
         this.animate();
     }
 
-    // Change Pacman's direction and start moving if not already moving
+    // Change direction, add it to the queue
     changeDirection(event) {
-        if (event.key === "ArrowUp") {
-            this.direction = "up";
-            if (!this.moving) this.moving = true;
-        } else if (event.key === "ArrowDown") {
-            this.direction = "down";
-            if (!this.moving) this.moving = true;
-        } else if (event.key === "ArrowLeft") {
-            this.direction = "left";
-            if (!this.moving) this.moving = true;
-        } else if (event.key === "ArrowRight") {
-            this.direction = "right";
-            if (!this.moving) this.moving = true;
+        let newDirection = null;
+
+        if (event.key === "ArrowUp" || event.key === "w") {
+            newDirection = "up";
+        } else if (event.key === "ArrowDown"  || event.key === "s") {
+            newDirection = "down";
+        } else if (event.key === "ArrowLeft" || event.key === "a") {
+            newDirection = "left";
+        } else if (event.key === "ArrowRight" || event.key === "d") {
+            newDirection = "right";
+        }
+
+        // Add new direction to the queue if it's not the current direction
+        if (newDirection && newDirection !== this.direction) {
+            if (this.nextDirections.length === 0) {
+                this.nextDirections.push(newDirection);
+            } else if (this.nextDirections[this.nextDirections.length - 1] !== newDirection) {
+                this.nextDirections.push(newDirection);
+            }
         }
     }
 
-    // Check if Pacman can move to the new position based on transparency
-    canMoveTo(x, y) {
-        // Get the grid position of the next tile Pacman wants to move to
-        const centerX = x + this.size / 2;
-        const centerY = y + this.size / 2;
-
-        const gridX = Math.floor(centerX / this.mundo.gridWidth);
-        const gridY = Math.floor(centerY / this.mundo.gridHeight);
-        // Check the transparency value at the grid position
-        return this.mundo.transparency[gridY] && this.mundo.transparency[gridY][gridX] === 1;
+    canMoveTo(gridX, gridY) {
+        return (
+            gridX >= 0 &&
+            gridY >= 0 &&
+            this.mundo.transparency[gridY] &&
+            this.mundo.transparency[gridY][gridX] === 1
+        );
     }
 
-    // Update Pacman's position if moving
+    alignToGrid() {
+        this.x = this.gridX * this.gridSize + this.gridSize / 2;
+        this.y = this.gridY * this.gridSize + this.gridSize / 2;
+    }
+
+    // Update Pacman's position
     updatePosition() {
-        if (this.moving) {
-            let newX = this.x;
-            let newY = this.y;
-
-            // Calculate the new position based on the direction
-            if (this.direction === "up") {
-                newY -= this.speed;
-            } else if (this.direction === "down") {
-                newY += this.speed;
-            } else if (this.direction === "left") {
-                newX -= this.speed;
-            } else if (this.direction === "right") {
-                newX += this.speed;
+        // Calculate the target position based on current grid position
+        const targetX = this.gridX * this.gridSize + this.gridSize / 2;
+        const targetY = this.gridY * this.gridSize + this.gridSize / 2;
+    
+        // Check if Pacman is aligned with the grid center
+        const alignedX = Math.abs(this.x - targetX) < this.speed;
+        const alignedY = Math.abs(this.y - targetY) < this.speed;
+    
+        // Only update position if Pacman is aligned
+        if (alignedX && alignedY) {
+            let nextGridX = this.gridX;
+            let nextGridY = this.gridY;
+    
+            // Determine the next grid cell based on direction
+            if (this.direction === "up") nextGridY--;
+            else if (this.direction === "down") nextGridY++;
+            else if (this.direction === "left") nextGridX--;
+            else if (this.direction === "right") nextGridX++;
+    
+            // Check if Pacman can move in the current direction
+            if (this.canMoveTo(nextGridX, nextGridY)) {
+                // If Pacman can move, we perform the movement
+                if (this.direction === "up") this.y -= this.speed;
+                else if (this.direction === "down") this.y += this.speed;
+                else if (this.direction === "left") this.x -= this.speed;
+                else if (this.direction === "right") this.x += this.speed;
+    
+                // Update grid position after moving
+                this.gridX = nextGridX;
+                this.gridY = nextGridY;
             }
-
-            // Check if the new position is valid based on the transparency array
-            if (this.canMoveTo(newX, newY)) {
-                // Update the position only if the move is valid
-                this.x = newX;
-                this.y = newY;
+    
+            // Change direction if possible at the current tile
+            if (this.nextDirections.length > 0) {
+                let newDirection = this.nextDirections.shift(); // Get the next direction from the queue
+    
+                let testGridX = this.gridX;
+                let testGridY = this.gridY;
+    
+                if (newDirection === "up") testGridY--;
+                else if (newDirection === "down") testGridY++;
+                else if (newDirection === "left") testGridX--;
+                else if (newDirection === "right") testGridX++;
+    
+                if (this.canMoveTo(testGridX, testGridY)) {
+                    this.direction = newDirection;
+                }
+            }
+        } else {
+            // Align to the grid if not aligned
+            // Move Pacman towards the target position to align
+            if (!alignedX) {
+                this.x += (targetX - this.x) > 0 ? this.speed : -this.speed;
+            }
+            if (!alignedY) {
+                this.y += (targetY - this.y) > 0 ? this.speed : -this.speed;
+            }
+    
+            // Ensure Pacman doesn't overshoot the target
+            if (Math.abs(this.x - targetX) < this.speed) {
+                this.x = targetX;
+            }
+            if (Math.abs(this.y - targetY) < this.speed) {
+                this.y = targetY;
             }
         }
     }
-
     // Draw Pacman on the canvas
     draw() {
-        const centerX = this.x ;
-        const centerY = this.y ;
-
         this.mundo.ctx.beginPath();
-        this.mundo.ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); // Draw circle
+        this.mundo.ctx.arc(
+            this.x,
+            this.y,
+            this.gridSize, // Pacman's radius
+            0,
+            Math.PI * 2
+        );
         this.mundo.ctx.fillStyle = "yellow"; // Pacman color
-        this.mundo.ctx.fill();
-        this.mundo.ctx.closePath();
-
-        this.mundo.ctx.beginPath();
-        this.mundo.ctx.arc(centerX, centerY, 2, 0, Math.PI * 2); // Small circle for center
-        this.mundo.ctx.fillStyle = "red"; // Center marker color
         this.mundo.ctx.fill();
         this.mundo.ctx.closePath();
     }
