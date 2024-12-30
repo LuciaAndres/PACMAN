@@ -5,6 +5,7 @@ class Pacman {
         this.gridX = 14;
         this.gridY = 26;
         this.isPaused = true;
+        this.lives = 3;
 
         this.speed = 2.5;
         this.mouthAngle = 0;
@@ -20,6 +21,13 @@ class Pacman {
         this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
         this.y = this.gridY * this.gridSize + this.gridSize / 2;
 
+    }
+    gameOver()
+    {
+        if(this.lives === 0)
+        {
+            location.reload();
+        }
     }
 
     // Handle key presses for direction and pause
@@ -59,13 +67,11 @@ class Pacman {
                 this.mundo.transparency[gridY][gridX] === 4) // Check if the cell is walkable
         );
     }
-
     // Update Pacman's position
     async updatePosition() {
-        if(this.isPaused) return;
+        if (this.isPaused) return;
 
-        if(this.eatPellet)
-        {
+        if (this.eatPellet) {
             this.eatPellet();
             await setTimeout(1000 / this.mundo.fps);
         }
@@ -97,53 +103,52 @@ class Pacman {
         if (isAlignedX && isAlignedY) {
             let nextGridX = this.gridX;
             let nextGridY = this.gridY;
-            
+
             let directionToUse = this.lastValidDirection; // Default to last valid direction
 
-        if (this.nextDirection) {
-            // Check if nextDirection is valid
-            let tempGridX = this.gridX;
-            let tempGridY = this.gridY;
+            if (this.nextDirection) {
+                // Check if nextDirection is valid
+                let tempGridX = this.gridX;
+                let tempGridY = this.gridY;
 
-            // Determine the temporary next grid cell based on nextDirection
-            if (this.nextDirection === "up") tempGridY--;
-            else if (this.nextDirection === "down") tempGridY++;
-            else if (this.nextDirection === "left") tempGridX--;
-            else if (this.nextDirection === "right") tempGridX++;
+                // Determine the temporary next grid cell based on nextDirection
+                if (this.nextDirection === "up") tempGridY--;
+                else if (this.nextDirection === "down") tempGridY++;
+                else if (this.nextDirection === "left") tempGridX--;
+                else if (this.nextDirection === "right") tempGridX++;
 
-            // Check if the nextDirection is valid
-            if (this.canMoveTo(tempGridX, tempGridY)) {
-                directionToUse = this.nextDirection; // Use nextDirection if valid
+                // Check if the nextDirection is valid
+                if (this.canMoveTo(tempGridX, tempGridY)) {
+                    directionToUse = this.nextDirection; // Use nextDirection if valid
+                }
+            }
+
+            // Update nextGridX and nextGridY based on the direction to use
+            if (directionToUse === "up") nextGridY--;
+            else if (directionToUse === "down") nextGridY++;
+            else if (directionToUse === "left") nextGridX--;
+            else if (directionToUse === "right") nextGridX++;
+
+            // Check for wrapping around the grid
+            if (nextGridX < 0) {
+                this.gridX = this.mundo.transparency[0].length - 1; // Wrap to the right edge
+                this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2; // Set position immediately
+            } else if (nextGridX >= this.mundo.transparency[0].length) {
+                this.gridX = 0; // Wrap to the left edge
+                this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2; // Set position immediately
+            }
+
+            // Update grid coordinates if the next cell is walkable
+            if (this.canMoveTo(nextGridX, nextGridY)) {
+                this.gridX = nextGridX;
+                this.gridY = nextGridY;
+                this.lastValidDirection = directionToUse; // Update last valid direction
+                this.direction = directionToUse; // Change direction to the current direction
             }
         }
-
-        // Update nextGridX and nextGridY based on the direction to use
-        if (directionToUse === "up") nextGridY--;
-        else if (directionToUse === "down") nextGridY++;
-        else if (directionToUse === "left") nextGridX--;
-        else if (directionToUse === "right") nextGridX++;
-
-        // Check for wrapping around the grid
-        if (nextGridX < 0) {
-            this.gridX = this.mundo.transparency[0].length - 1; // Wrap to the right edge
-            this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2; // Set position immediately
-        } else if (nextGridX >= this.mundo.transparency[0].length) {
-            this.gridX = 0; // Wrap to the left edge
-            this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2; // Set position immediately
-        }
-
-        // Update grid coordinates if the next cell is walkable
-        if (this.canMoveTo(nextGridX, nextGridY)) {
-            this.gridX = nextGridX;
-            this.gridY = nextGridY;
-            this.lastValidDirection = directionToUse; // Update last valid direction
-            this.direction = directionToUse; // Change direction to the current direction
-        }
-        }
     }
-    
+
     eatPellet() {
-        console.log(this.mundo.transparency);
         if (this.mundo.transparency[this.gridY][this.gridX] === 1) {
             this.score += 10;
             this.mundo.transparency[this.gridY][this.gridX] = 3;
@@ -158,7 +163,10 @@ class Pacman {
     }
 
     powerPelletFunc() {
-
+        for(const ghost of this.mundo.ghosts)
+            {
+                ghost.getFrightened();
+            }
     }
     // Draw Pacman on the canvas
     draw() {
@@ -176,15 +184,16 @@ class Pacman {
         this.mundo.ctx.fill(); // Fill the shape
         this.mundo.ctx.closePath(); // Close the path
     }
-
-    // Main loop
+ 
     animate() {
-        if(!this.isPaused){
-        this.mouthAngle += this.mouthOpening ? 0.16 : -0.16;
-        if (this.mouthAngle > 0.3 * Math.PI || this.mouthAngle <= 0) {
-            this.mouthOpening = !this.mouthOpening;
-        } // Update Pacman's position
+        if (!this.isPaused) {
+            this.mouthAngle += this.mouthOpening ? 0.16 : -0.16;
+            if (this.mouthAngle > 0.3 * Math.PI || this.mouthAngle <= 0) {
+                this.mouthOpening = !this.mouthOpening;
+            } // Update Pacman's position
         }
         this.draw(); // Draw Pacman
+        this.gameOver();
+        //console.log(this.lives);
     }
 }

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="autor" content = "Lucas Joglar y Lucía Andrés"/>
+    <meta name="autor" content="Lucas Joglar y Lucía Andrés" />
     <title>ᗧ···ᗣ···ᗣ··</title>
     <style>
         body {
@@ -27,6 +28,7 @@
             padding: 20px;
             gap: 20px;
         }
+
         .canvas-principal {
             background-color: black;
             position: relative;
@@ -34,9 +36,9 @@
             height: 576px;
             border: 2px solid black;
         }
-        
     </style>
 </head>
+
 <body>
     <!--Esta la página subida a github
         página:https://luciaandres.github.io/Practica2Fundamentos/
@@ -45,24 +47,20 @@
     <div class="encabezado">
         <h1>Pac Man??</h1>
     </div>
+    
     <div class="contenedora">
         <div class="canvas-principal">
             <canvas id="canvas-principal" width="448 " height="576"></canvas>
             <div style="display:none;">
-                <img
-                  id="map"
-                  src="./Pacman Sprites/mapa.png"
-                />
-                <img
-                 id = "spritesheet"
-                 src = "./Pacman Sprites/personajes.png"
-                 />
-              </div>
+                <img id="map" src="./Pacman Sprites/mapa.png" />
+                <img id="spritesheet" src="./Pacman Sprites/personajes.png" />
+            </div>
         </div>
-        <script src ="Pacman.js"></script>
-        <script src ="Ghosts.js"></script>
-        <script src= "World.js"></script>
+        <script src="Pacman.js"></script>
+        <script src="Ghosts.js"></script>
+        <script src="World.js"></script>
 
     </div>
 </body>
+
 </html>

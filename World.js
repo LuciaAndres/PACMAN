@@ -1,3 +1,4 @@
+
 class Mundo {
     constructor() {
         this.canvas = document.getElementById("canvas-principal");
@@ -6,15 +7,22 @@ class Mundo {
 
         this.gridWidth = 16;
         this.gridHeight = 16;
-
+        
         this.fps = 1;
         this.lastLoop = new Date();
         this.pacman = new Pacman(this);
-        this.blinky = new Blinky(this);
-        this.pinky;
-        this.inky;
-        this.clyde;
-        
+        this.ghosts = [
+        this.blinky = new Blinky(this),
+        this.pinky = new Pinky(this),
+        this.inky = new Inky(this),
+        this.clyde = new Clyde(this),
+        ];
+
+        this.powerPelletVisible = true;
+        this.powerPelletTimer = true;
+        this.blinkInterval = 200;
+        this.lastBlinkTime = performance.now();
+        this.currentTime = performance.now();
 
         window.addEventListener("keydown", (event) => {
             this.pacman.handleKeyPress(event);
@@ -39,9 +47,9 @@ class Mundo {
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 0, 0, 2, 2, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 2, 2, 2, 2, 2, 2, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-                [3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 0, 2, 2, 2, 2, 2, 2, 0, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3,],
-                [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 2, 2, 2, 2, 2, 2, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 3, 3, 3, 3, 3, 3, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                [3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 0, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3,],
+                [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 3, 3, 3, 3, 3, 3, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -78,6 +86,17 @@ class Mundo {
         this.animate();
     }
 
+    updatePowerPelletVisibility()
+    {
+        if(this.pacman.isPaused) return;
+        const elapsedTime = this.currentTime - this.lastBlinkTime; // Calculate elapsed time
+
+    if (elapsedTime >= this.blinkInterval) {
+        this.powerPelletVisible = !this.powerPelletVisible; // Toggle visibility
+        this.lastBlinkTime = this.currentTime; // Update the last blink time
+    }
+    }
+
     drawBackground() {
         this.ctx.drawImage(this.image, 0, 0, 224, 288, 0, 48, 448, 576);
         this.drawPellets();
@@ -94,7 +113,7 @@ class Mundo {
                     const x = col * this.gridWidth + (this.gridWidth - pelletSize) / 2; // Center x
                     const y = row * this.gridHeight + (this.gridHeight - pelletSize) / 2; // Center y
                     this.ctx.fillRect(x, y, pelletSize, pelletSize); // Draw square pellet
-                } else if (this.transparency[row][col] === 4) { // Check for pellet
+                } else if (this.transparency[row][col] === 4 && this.powerPelletVisible) { // Check for pellet
                     const x = col * this.gridWidth + this.gridWidth / 2; // Center x
                     const y = row * this.gridHeight + this.gridHeight / 2; // Center y
                     this.ctx.beginPath();
@@ -106,9 +125,8 @@ class Mundo {
         }
     }
 
-    drawTile(col, row)
-    {
-        this.ctx.fillStyle = "rgba(255, 0, 0, 1)";
+    drawTile(col, row, color) {
+        this.ctx.fillStyle = color;
         this.ctx.fillRect(col * this.gridWidth, row * this.gridHeight, this.gridWidth, this.gridHeight);
     }
 
@@ -130,7 +148,7 @@ class Mundo {
             this.ctx.stroke();
         }
         // Loop through the transparency array and draw each square
-        /*
+        
         for (let row = 0; row < this.transparency.length; row++) {
             for (let col = 0; col < this.transparency[row].length; col++) {
                 const transparencyValue = this.transparency[row][col]; // Get transparency value (0 or 1)
@@ -157,31 +175,35 @@ class Mundo {
                 this.ctx.textBaseline = "middle"; // Middle alignment for vertical
                 this.ctx.fillText(transparencyValue, col * this.gridWidth + this.gridWidth / 2, row * this.gridHeight + this.gridHeight / 2);
             }
-        }*/
+        }
 
     }
 
-    gameLoop()
-    {
+    gameLoop() {
         var thisLoop = new Date();
-        this.fps = 1000/(thisLoop - this.lastLoop);
+        this.fps = 1000 / (thisLoop - this.lastLoop);
+        this.currentTime = performance.now();
 
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); 
+        this.updatePowerPelletVisibility();
         this.pacman.updatePosition();
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); // Clear canvas
+
         this.drawBackground();
         this.pacman.animate();
         this.ghostsUpdate();
-        
-        if(this.debugMode){
-        this.drawGrid(); // Redraw the grid
+
+        if (this.debugMode) {
+            this.drawGrid(); // Redraw the grid
         }
     }
 
-    ghostsUpdate()
-    {
-        this.blinky.draw();
+    ghostsUpdate() {
+        for(const ghost of this.ghosts)
+        {
+            ghost.update();
+        }
     }
-    animate(){
+    animate() {
         this.gameLoop();
         requestAnimationFrame(this.animate.bind(this));
 
