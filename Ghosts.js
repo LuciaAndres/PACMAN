@@ -93,7 +93,8 @@ class Ghost {
             gridX < this.mundo.transparency[gridY].length && // Ensure gridX is within bounds
             (this.mundo.transparency[gridY][gridX] === 1 ||
                 this.mundo.transparency[gridY][gridX] === 3 ||
-                this.mundo.transparency[gridY][gridX] === 4) // Check if the cell is walkable
+                this.mundo.transparency[gridY][gridX] === 4 ||
+                this.mundo.transparency[gridY][gridX] === 5) // Check if the cell is walkable
         );
     }
 
