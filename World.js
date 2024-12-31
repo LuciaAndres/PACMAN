@@ -8,15 +8,15 @@ class Mundo {
 
         this.gridWidth = 16;
         this.gridHeight = 16;
-        
+
         this.fps = 1;
         this.lastLoop = new Date();
         this.pacman = new Pacman(this);
         this.ghosts = [
-        this.blinky = new Blinky(this),
-        this.pinky = new Pinky(this),
-        this.inky = new Inky(this),
-        this.clyde = new Clyde(this),
+            this.blinky = new Blinky(this),
+            this.pinky = new Pinky(this),
+            this.inky = new Inky(this),
+            this.clyde = new Clyde(this),
         ];
 
         this.powerPelletVisible = true;
@@ -88,15 +88,14 @@ class Mundo {
         this.animate();
     }
 
-    updatePowerPelletVisibility()
-    {
-        if(this.pacman.isPaused) return;
+    updatePowerPelletVisibility() {
+        if (this.pacman.isPaused) return;
         const elapsedTime = this.currentTime - this.lastBlinkTime; // Calculate elapsed time
 
-    if (elapsedTime >= this.blinkInterval) {
-        this.powerPelletVisible = !this.powerPelletVisible; // Toggle visibility
-        this.lastBlinkTime = this.currentTime; // Update the last blink time
-    }
+        if (elapsedTime >= this.blinkInterval) {
+            this.powerPelletVisible = !this.powerPelletVisible; // Toggle visibility
+            this.lastBlinkTime = this.currentTime; // Update the last blink time
+        }
     }
 
     drawBackground() {
@@ -150,7 +149,7 @@ class Mundo {
             this.ctx.stroke();
         }
         // Loop through the transparency array and draw each square
-        
+
         for (let row = 0; row < this.transparency.length; row++) {
             for (let col = 0; col < this.transparency[row].length; col++) {
                 const transparencyValue = this.transparency[row][col]; // Get transparency value (0 or 1)
@@ -188,22 +187,26 @@ class Mundo {
         this.fps = 1000 / (thisLoop - this.lastLoop);
         this.currentTime = performance.now();
 
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height); 
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.updatePowerPelletVisibility();
-        this.pacman.updatePosition();
-
         this.drawBackground();
-        this.pacman.update();
-        this.ghostsUpdate();
+        this.pacman.checkCollisionsWithGhosts();
+        if (this.pacman.isHit) {
+            this.pacman.handleHitAnimation();
+        } else {
+            this.pacman.updatePosition();
 
-        if (this.debugMode) {
-            this.drawGrid(); // Redraw the grid
+            this.pacman.update();
+            this.ghostsUpdate();
+
+            if (this.debugMode) {
+                this.drawGrid(); // Redraw the grid
+            }
         }
     }
 
     ghostsUpdate() {
-        for(const ghost of this.ghosts)
-        {
+        for (const ghost of this.ghosts) {
             ghost.update();
         }
     }

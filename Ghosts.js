@@ -1,14 +1,22 @@
 class Ghost {
-    constructor(mundo, gridX, gridY, scatterCol, scatterRow, color) {
+    constructor(mundo, gridX, gridY, scatterCol, scatterRow, color, frameY) {
         this.mundo = mundo;
         this.gridX = gridX;
         this.gridY = gridY;
         this.gridSize = this.mundo.gridHeight;
 
-        this.speed = 0.8 * this.mundo.pacman.speed;
+        this.speed = Math.floor(0.8 * this.mundo.pacman.speed);
         this.ORIGINAL_SPEED = this.speed;
         this.direction = "right";
-        this.lastValidDirection= this.direction;
+        this.lastValidDirection = this.direction;
+
+        this.currentFrame = 0; // 0 or 1, depending on which frame you're using
+        this.frameWidth = 16;  // Width of a single frame
+        this.frameHeight = 16; // Height of a single frame
+        this.frameSpeed = 10;
+        this.animationTimer = 0;
+        this.frameIndex = 0;
+        this.frameY = frameY;
 
         this.scatterMode = true;
         this.scatterCol = scatterCol;
@@ -35,12 +43,46 @@ class Ghost {
     }
 
     draw() {
-        this.mundo.ctx.beginPath();
-        this.mundo.ctx.arc(this.x, this.y, 12, 0, 2 * Math.PI);
-        this.mundo.ctx.fillStyle = this.color;
-        this.mundo.ctx.fill();
-        this.mundo.ctx.closePath();
-        //this.mundo.drawTile(this.targetGridX, this.targetGridY, this.color);
+        let updatedIndex = this.frameIndex;
+        if(this.direction === "left")
+        {
+            updatedIndex += 2;
+        } else if(this.direction === "up")
+        {
+            updatedIndex += 4;
+        } else if(this.direction === "down")
+        {
+          updatedIndex += 6;
+        }
+        let frameX = updatedIndex * this.frameWidth;
+        
+        const frameYGrid = this.frameY * this.frameHeight;
+        // Center the sprite on Pac-Man's position
+        const drawX = this.x - this.frameWidth;
+        const drawY = this.y - this.frameHeight;
+
+        // Draw the current frame from the sprite sheet
+        this.mundo.ctx.drawImage(
+            this.mundo.spriteSheet, 
+            frameX, frameYGrid,
+            this.frameWidth, this.frameHeight,
+            drawX, drawY,
+            32, 32
+        );
+    }
+
+    updateAnimation() {
+        const now = Date.now();
+
+        // Change the frame every 200ms (adjust the value for faster/slower animation)
+        if (now - this.animationTimer > 100) {
+            if (this.frameIndex === 0) {
+                this.frameIndex = 1; // Transition from open to neutral
+            } else if (this.frameIndex === 1) {
+                this.frameIndex = 0; // Transition from neutral back to open
+            }
+            this.animationTimer = now; // Reset timer
+        }
     }
 
     canMoveTo(gridX, gridY) {
@@ -173,7 +215,7 @@ class Ghost {
             this.updateGridPosition();
         }
     }
-    
+
     updateGridPosition() {
         if (this.direction === "up") this.gridY--;
         else if (this.direction === "down") this.gridY++;
@@ -200,7 +242,7 @@ class Ghost {
         this.findBestDirection();
         this.isFrighted = true;
     }
-    
+
     checkSurroundingTiles() {
         const directions = ["up", "down", "left", "right"];
         return directions.filter(dir => {
@@ -226,9 +268,13 @@ class Ghost {
             this.targetGridX = this.scatterCol;
             this.targetGridY = this.scatterRow;
         }
+    }
+
+    checkIfHit()
+    {
         if ((this.targetGridX === this.gridX) && (this.targetGridY === this.gridY)) {
-            this.mundo.pacman.lives -= 1;
-        }
+            this.mundo.pacman.isHit = true;
+        }  
     }
 
     updateMode() {
@@ -252,20 +298,26 @@ class Ghost {
 
     update() {
         this.updatePosition(); // Update ghost's position
-        this.updateMode();
         this.draw(); // Draw ghost
+        if(!this.mundo.pacman.isPaused)
+        {
+            this.updateMode();
+            this.updateAnimation();
+        }
+        this.checkIfHit();
+        //this.mundo.drawTile(this.gridX, this.gridY, this.color);
     }
 }
 
 class Blinky extends Ghost {
     constructor(mundo) {
-        super(mundo, 14, 14, 26, 0, "red");
+        super(mundo, 14, 14, 26, 0, "red", 4);
     }
 }
 
 class Pinky extends Ghost {
     constructor(mundo) {
-        super(mundo, 12, 14, 3, 0, "pink");
+        super(mundo, 12, 14, 3, 0, "pink", 5);
     }
 
     setTargetTiles() {
@@ -275,7 +327,7 @@ class Pinky extends Ghost {
 
             switch (this.mundo.pacman.direction) {
                 case 'up':
-                     this.targetGridY -= 4; // Move up 4 squares
+                    this.targetGridY -= 4; // Move up 4 squares
                     break;
                 case 'down':
                     this.targetGridY += 4; // Move down 4 squares
@@ -295,7 +347,7 @@ class Pinky extends Ghost {
 
 class Inky extends Ghost {
     constructor(mundo) {
-        super(mundo, 16, 14, 27, 35, "lightblue");
+        super(mundo, 16, 14, 27, 35, "lightblue", 6);
     }
 
     setTargetTiles() {
@@ -336,7 +388,7 @@ class Inky extends Ghost {
 
 class Clyde extends Ghost {
     constructor(mundo) {
-        super(mundo, 18, 14, 0, 35, "orange");
+        super(mundo, 18, 14, 0, 35, "orange", 7);
     }
 
     setTargetTiles() {

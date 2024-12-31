@@ -6,11 +6,12 @@ class Pacman {
         this.gridY = 26;
         this.isPaused = true;
         this.lives = 3;
+        this.isHit = false;
 
-        this.speed = 2.5;
+        this.speed = 1.3;
         this.mouthAngle = Math.PI / 4; // Initial mouth angle
 
-        this.direction = "up";
+        this.direction = "right";
         this.lastValidDirection = this.direction;
         this.nextDirection = null;
 
@@ -25,12 +26,14 @@ class Pacman {
         this.frameHeight = 16; // Height of a single frame
         this.frameSpeed = 10;
         this.animationTimer = 0;
+        this.deathAnimationTimer = 0;
         this.frameIndex = 0;
+
+        this.deathIndex = 0;
     }
-    gameOver() {
-        if (this.lives === 0) {
-            location.reload();
-        }
+
+    resetGame() {
+        location.reload();
     }
 
     // Handle key presses for direction and pause
@@ -185,8 +188,10 @@ class Pacman {
 
         // Calculate the x and y coordinates for the sprite from the sprite sheet
         const frameX = this.frameWidth * this.frameIndex;
+        if (this.frameIndex == 2) {
+            frameRow = 0;
+        }
         const frameY = frameRow * this.frameHeight;
-
         // Center the sprite on Pac-Man's position
         const drawX = this.x - this.frameWidth;
         const drawY = this.y - this.frameHeight;
@@ -204,19 +209,74 @@ class Pacman {
     updateAnimation() {
         const now = Date.now();
 
-        // Change the frame every 200ms (adjust the value for faster/slower animation)
+        // Change the frame every 100ms (adjust the value for faster/slower animation)
         if (now - this.animationTimer > 100) {
-            this.frameIndex = (this.frameIndex + 1) % 2; // Toggle between 0 and 1 for each direction
+            if (this.frameIndex === 0) {
+                this.frameIndex = 1; // Transition from open to closed
+            } else if (this.frameIndex === 1) {
+                this.frameIndex = 2; // Transition from closed to neutral
+            } else if (this.frameIndex === 2) {
+                this.frameIndex = 0; // Transition from neutral back to open
+            }
             this.animationTimer = now; // Reset timer
+        }
+    }
+
+    handleHitAnimation() {
+
+        // If the death animation is done (e.g., after 2 seconds), reset the game or stop drawing
+        if (this.deathIndex == 13) {
+            this.resetGame();
+        } else {
+            this.updateDeathAnimation(); // Update the death animation frame
+            this.drawDeathFrame(); // Draw the death animation frame
+        }
+    }
+
+    updateDeathAnimation() {
+        const now = Date.now();
+
+        if (now - this.deathAnimationTimer > 100) {
+            if (this.deathIndex !== 13) {
+                this.deathIndex++;
+                this.deathAnimationTimer = now; // Reset timer
+            }
+        }
+    }
+
+    drawDeathFrame() {
+        const frameX = this.frameWidth * this.deathIndex + 2 * this.frameWidth;
+        const frameY = 0;  //Death animation is in the first row
+
+        const drawX = this.x - this.frameWidth;
+        const drawY = this.y - this.frameHeight;
+
+        // Draw the death frame from the sprite sheet
+        this.mundo.ctx.drawImage(
+            this.mundo.spriteSheet,
+            frameX, frameY,
+            this.frameWidth, this.frameHeight,
+            drawX, drawY,
+            32, 32
+        );
+    }
+    checkCollisionsWithGhosts()
+    {
+        for (const ghost of this.mundo.ghosts) {
+            if(ghost.gridX == this.gridX && ghost.gridY == this.gridY)
+            {
+                this.isHit = true;
+            }
         }
     }
 
     update() {
         if (!this.isPaused) {
+            this.checkCollisionsWithGhosts
             this.updatePosition();
             this.updateAnimation(); // Update Pacman's position
         }
         this.draw(); // Draw Pacman
-        this.gameOver(); // Check for game over
+        //this.mundo.drawTile(this.gridX, this.gridY, "yellow");
     }
 }
