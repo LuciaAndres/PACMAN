@@ -7,7 +7,7 @@ class Ghost {
 
         this.speed = 0.8 * this.mundo.pacman.speed;
         this.ORIGINAL_SPEED = this.speed;
-        this.direction = "left";
+        this.direction = "right";
         this.lastValidDirection= this.direction;
 
         this.scatterMode = true;
@@ -40,7 +40,7 @@ class Ghost {
         this.mundo.ctx.fillStyle = this.color;
         this.mundo.ctx.fill();
         this.mundo.ctx.closePath();
-        this.mundo.drawTile(this.targetGridX, this.targetGridY, this.color);
+        //this.mundo.drawTile(this.targetGridX, this.targetGridY, this.color);
     }
 
     canMoveTo(gridX, gridY) {
@@ -117,32 +117,37 @@ class Ghost {
             case "up":
                 if (this.canMoveTo(this.gridX, this.gridY - 1)) {
                     this.gridY--;
+                } else if (this.mundo.transparency[this.gridY - 1] && this.mundo.transparency[this.gridY - 1][this.gridX] === 5) {
+                    // Wrap around to the bottom
+                    this.gridY = this.mundo.transparency.length - 1; // Wrap to the bottom
                 }
                 break;
             case "down":
                 if (this.canMoveTo(this.gridX, this.gridY + 1)) {
                     this.gridY++;
+                } else if (this.mundo.transparency[this.gridY + 1] && this.mundo.transparency[this.gridY + 1][this.gridX] === 5) {
+                    // Wrap around to the top
+                    this.gridY = 0; // Wrap to the top
                 }
                 break;
             case "left":
                 if (this.canMoveTo(this.gridX - 1, this.gridY)) {
                     this.gridX--;
+                } else if (this.canMoveTo(this.gridX - 1, this.gridY) && this.mundo.transparency[this.gridY][this.gridX - 1] === 5) {
+                    // Wrap around to the right edge
+                    this.gridX = this.mundo.transparency[0].length - 1; // Wrap to the right
                 }
                 break;
             case "right":
                 if (this.canMoveTo(this.gridX + 1, this.gridY)) {
                     this.gridX++;
+                } else if (this.canMoveTo(this.gridX + 1, this.gridY) && this.mundo.transparency[this.gridY][this.gridX + 1] === 5) {
+                    // Wrap around to the left edge
+                    this.gridX = 0; // Wrap to the left
                 }
                 break;
         }
-    
-        // Wrap around logic
-        if (this.gridX < 0) {
-            this.gridX = this.mundo.transparency[0].length - 1; // Wrap to the right edge
-        } else if (this.gridX >= this.mundo.transparency[0].length) {
-            this.gridX = 0; // Wrap to the left edge
-        }
-        console.log(`Ghost Position: (${this.gridX}, ${this.gridY})`);
+
     }
 
     findBestDirection() {
@@ -174,13 +179,6 @@ class Ghost {
         else if (this.direction === "down") this.gridY++;
         else if (this.direction === "left") this.gridX--;
         else if (this.direction === "right") this.gridX++;
-
-        // Check for wrapping around the grid
-        if (this.gridX < 0) {
-            this.gridX = this.mundo.transparency[0].length - 1; // Wrap to the right edge
-        } else if (this.gridX >= 26) {
-            this.gridX = 0; // Wrap to the left edge
-        }
 
         // Update the target position based on the new grid coordinates
         this.targetX = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;

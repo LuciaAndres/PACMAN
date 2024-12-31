@@ -8,10 +8,9 @@ class Pacman {
         this.lives = 3;
 
         this.speed = 2.5;
-        this.mouthAngle = 0;
-        this.mouthOpening = true;
+        this.mouthAngle = Math.PI / 4; // Initial mouth angle
 
-        this.direction = "right";
+        this.direction = "up";
         this.lastValidDirection = this.direction;
         this.nextDirection = null;
 
@@ -21,11 +20,15 @@ class Pacman {
         this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
         this.y = this.gridY * this.gridSize + this.gridSize / 2;
 
+        this.currentFrame = 0; // 0 or 1, depending on which frame you're using
+        this.frameWidth = 16;  // Width of a single frame
+        this.frameHeight = 16; // Height of a single frame
+        this.frameSpeed = 10;
+        this.animationTimer = 0;
+        this.frameIndex = 0;
     }
-    gameOver()
-    {
-        if(this.lives === 0)
-        {
+    gameOver() {
+        if (this.lives === 0) {
             location.reload();
         }
     }
@@ -64,7 +67,8 @@ class Pacman {
             gridX < this.mundo.transparency[gridY].length && // Ensure gridX is within bounds
             (this.mundo.transparency[gridY][gridX] === 1 ||
                 this.mundo.transparency[gridY][gridX] === 3 ||
-                this.mundo.transparency[gridY][gridX] === 4) // Check if the cell is walkable
+                this.mundo.transparency[gridY][gridX] === 4 ||
+                this.mundo.transparency[gridY][gridX] === 5) // Check if the cell is walkable
         );
     }
     // Update Pacman's position
@@ -145,55 +149,74 @@ class Pacman {
                 this.lastValidDirection = directionToUse; // Update last valid direction
                 this.direction = directionToUse; // Change direction to the current direction
             }
+
         }
     }
 
     eatPellet() {
-        if (this.mundo.transparency[this.gridY][this.gridX] === 1) {
-            this.score += 10;
-            this.mundo.transparency[this.gridY][this.gridX] = 3;
-            return true
-        } else if (this.mundo.transparency[this.gridY][this.gridX] === 4) {
-            this.score += 50;
-            this.mundo.transparency[this.gridY][this.gridX] = 3;
-            this.powerPelletFunc();
-            return true
+        const currentTile = this.mundo.transparency[this.gridY][this.gridX];
+        if (currentTile === 1 || currentTile === 4) { // Pellet or Power Pellet
+            const scoreIncrement = currentTile === 1 ? 10 : 50;
+            this.score += scoreIncrement;
+            this.mundo.transparency[this.gridY][this.gridX] = 3; // Change tile to empty
+            if (currentTile === 4) {
+                this.powerPelletFunc(); // Activate power pellet effect  
+            }
+            return true;
         }
-        return false
+        return false;
     }
 
     powerPelletFunc() {
-        for(const ghost of this.mundo.ghosts)
-            {
-                ghost.getFrightened();
-            }
+        for (const ghost of this.mundo.ghosts) {
+            ghost.getFrightened();
+        }
     }
     // Draw Pacman on the canvas
     draw() {
-        this.mundo.ctx.beginPath();
-        this.mundo.ctx.moveTo(this.x, this.y); // Move to the center of Pac-Man
-        this.mundo.ctx.arc(
-            this.x,
-            this.y,
-            this.size - 4, // Radius of Pac-Man
-            this.mouthAngle, // Start angle
-            2 * Math.PI - this.mouthAngle // End angle
+        let frameRow = 0; // Default to right direction
+        if (this.direction === 'left') {
+            frameRow = 1;
+        } else if (this.direction === 'down') {
+            frameRow = 3;
+        } else if (this.direction === 'up') {
+            frameRow = 2;
+        }
+
+        // Calculate the x and y coordinates for the sprite from the sprite sheet
+        const frameX = this.frameWidth * this.frameIndex;
+        const frameY = frameRow * this.frameHeight;
+
+        // Center the sprite on Pac-Man's position
+        const drawX = this.x - this.frameWidth;
+        const drawY = this.y - this.frameHeight;
+
+        // Draw the current frame from the sprite sheet
+        this.mundo.ctx.drawImage(
+            this.mundo.spriteSheet,
+            frameX, frameY,
+            this.frameWidth, this.frameHeight,
+            drawX, drawY,
+            32, 32
         );
-        this.mundo.ctx.lineTo(this.x, this.y); // Close the path to the center
-        this.mundo.ctx.fillStyle = "yellow"; // Pacman color
-        this.mundo.ctx.fill(); // Fill the shape
-        this.mundo.ctx.closePath(); // Close the path
     }
- 
-    animate() {
+
+    updateAnimation() {
+        const now = Date.now();
+
+        // Change the frame every 200ms (adjust the value for faster/slower animation)
+        if (now - this.animationTimer > 100) {
+            this.frameIndex = (this.frameIndex + 1) % 2; // Toggle between 0 and 1 for each direction
+            this.animationTimer = now; // Reset timer
+        }
+    }
+
+    update() {
         if (!this.isPaused) {
-            this.mouthAngle += this.mouthOpening ? 0.16 : -0.16;
-            if (this.mouthAngle > 0.3 * Math.PI || this.mouthAngle <= 0) {
-                this.mouthOpening = !this.mouthOpening;
-            } // Update Pacman's position
+            this.updatePosition();
+            this.updateAnimation(); // Update Pacman's position
         }
         this.draw(); // Draw Pacman
-        this.gameOver();
-        //console.log(this.lives);
+        this.gameOver(); // Check for game over
     }
 }

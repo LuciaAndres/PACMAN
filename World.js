@@ -4,6 +4,7 @@ class Mundo {
         this.canvas = document.getElementById("canvas-principal");
         this.ctx = this.canvas.getContext("2d");
         this.image = document.getElementById("map");
+        this.spriteSheet = document.getElementById("spritesheet");
 
         this.gridWidth = 16;
         this.gridHeight = 16;
@@ -48,7 +49,7 @@ class Mundo {
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 0, 0, 2, 2, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 3, 3, 3, 3, 3, 3, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-                [3, 3, 3, 3, 3, 3, 1, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 0, 3, 3, 3, 1, 3, 3, 3, 3, 3, 3,],
+                [5, 3, 3, 3, 3, 3, 1, 3, 3, 3, 0, 3, 3, 3, 3, 3, 3, 0, 3, 3, 3, 1, 3, 3, 3, 3, 3, 5],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 3, 3, 3, 3, 3, 3, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 1, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -74,6 +75,7 @@ class Mundo {
         2 - CASA FANTASMA
         3 - CAMINO SIN PELLET
         4 - POWER PELLET
+        5 - WRAP AROUND
         */
         if (this.canvas && this.image) {
             this.image.addEventListener("load", () => {
@@ -180,6 +182,8 @@ class Mundo {
     }
 
     gameLoop() {
+        //console.log(document.getElementById("spritesheet"));
+        //console.log(this.spriteSheet);
         var thisLoop = new Date();
         this.fps = 1000 / (thisLoop - this.lastLoop);
         this.currentTime = performance.now();
@@ -189,7 +193,7 @@ class Mundo {
         this.pacman.updatePosition();
 
         this.drawBackground();
-        this.pacman.animate();
+        this.pacman.update();
         this.ghostsUpdate();
 
         if (this.debugMode) {
