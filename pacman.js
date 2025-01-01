@@ -21,15 +21,18 @@ class Pacman {
         this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
         this.y = this.gridY * this.gridSize + this.gridSize / 2;
 
-        this.currentFrame = 0; // 0 or 1, depending on which frame you're using
         this.frameWidth = 16;  // Width of a single frame
         this.frameHeight = 16; // Height of a single frame
         this.frameSpeed = 10;
         this.animationTimer = 0;
         this.deathAnimationTimer = 0;
-        this.frameIndex = 0;
+        this.frameIndex = 2;
+        this.frightenedTimer = null;
+        this.frightenedTimerStart = 0;
 
         this.deathIndex = 0;
+        this.dotsEaten = 0;
+
     }
 
     resetGame() {
@@ -59,7 +62,10 @@ class Pacman {
         // Update the direction to the new direction if it's valid
         if (newDirection) {
             this.nextDirection = newDirection;
+            this.isPaused = false;
         }
+
+
     }
 
     canMoveTo(gridX, gridY) {
@@ -165,15 +171,29 @@ class Pacman {
             if (currentTile === 4) {
                 this.powerPelletFunc(); // Activate power pellet effect  
             }
+            this.dotsEaten++;
             return true;
         }
         return false;
     }
 
     powerPelletFunc() {
+        if (this.frightenedTimer) {
+            clearTimeout(this.frightenedTimer);
+        }
+
         for (const ghost of this.mundo.ghosts) {
             ghost.getFrightened();
         }
+
+        this.frightenedTimerStart = Date.now();
+
+        this.frightenedTimer = setTimeout(() => {
+            for (const ghost of this.mundo.ghosts) {
+                ghost.revertToNormal(); // Revert ghost state back to normal
+            }
+            this.frightenedTimer = null; // Clear the timer reference
+        }, 10000);
     }
     // Draw Pacman on the canvas
     draw() {
@@ -260,12 +280,18 @@ class Pacman {
             32, 32
         );
     }
-    checkCollisionsWithGhosts()
-    {
+
+    checkCollisionsWithGhosts() {
         for (const ghost of this.mundo.ghosts) {
-            if(ghost.gridX == this.gridX && ghost.gridY == this.gridY)
-            {
-                this.isHit = true;
+            if (ghost.gridX == this.gridX && ghost.gridY == this.gridY) {
+                if (!ghost.isFrighted) {
+                    if (!ghost.isDead) {
+                        this.isHit = true;
+                    }
+                }
+                else {
+                    ghost.getEaten();
+                }
             }
         }
     }

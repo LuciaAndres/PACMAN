@@ -1,11 +1,12 @@
 class Ghost {
-    constructor(mundo, gridX, gridY, scatterCol, scatterRow, color, frameY) {
+    constructor(mundo, gridX, gridY, houseX, houseY, scatterCol, scatterRow, color, frameY, dotsEatenToExit) {
         this.mundo = mundo;
         this.gridX = gridX;
         this.gridY = gridY;
         this.gridSize = this.mundo.gridHeight;
-
-        this.speed = Math.floor(0.8 * this.mundo.pacman.speed);
+        this.gridXHouse = 14;
+        this.gridYHouse = 17;
+        this.speed = 0.8 * this.mundo.pacman.speed;
         this.ORIGINAL_SPEED = this.speed;
         this.direction = "right";
         this.lastValidDirection = this.direction;
@@ -18,12 +19,22 @@ class Ghost {
         this.frameIndex = 0;
         this.frameY = frameY;
 
+        this.blink = false;
+        this.blinkTimer = 0;
+        this.blinkInterval = 200;
+
         this.scatterMode = true;
         this.scatterCol = scatterCol;
         this.scatterRow = scatterRow;
+        this.houseX = houseX;
+        this.houseY = houseY;
         this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
         this.y = this.gridY * this.gridSize + this.gridSize / 2;
+
         this.isFrighted = false;
+        this.isDead = false;
+        this.inGhostHouse = false;
+        this.dotsEatenToExit = dotsEatenToExit;
 
         this.targetX = this.x; // Target position for smooth movement
         this.targetY = this.y; // Target position for smooth movement
@@ -56,10 +67,53 @@ class Ghost {
         }
         let frameX = updatedIndex * this.frameWidth;
         
-        const frameYGrid = this.frameY * this.frameHeight;
+        let frameYGrid = this.frameY * this.frameHeight;
         // Center the sprite on Pac-Man's position
         const drawX = this.x - this.frameWidth;
         const drawY = this.y - this.frameHeight;
+        if (this.isFrighted) {
+            frameYGrid = 4 * this.frameHeight;
+            
+            const elapsedTime = Date.now() - this.mundo.pacman.frightenedTimerStart; // Time since frightened state started
+            const remainingTime = 10000 - elapsedTime; // Calculate remaining time
+        // Start blinking when the timer is nearing its end
+        if (remainingTime > 0 && remainingTime <= 2000) { // 2 seconds left
+            // Blinking effect: alternate between visible and transparent
+            if (this.blinkTimer >= this.blinkInterval) {
+                this.blink = !this.blink; // Toggle blink state
+                this.blinkTimer = 0; // Reset the blink timer
+            } else {
+                this.blinkTimer += 16; // Increment by the frame time (approx. 60 FPS)
+            }
+
+            if (this.blink) {
+                frameX = (this.frameIndex + 10) * this.frameWidth; // Alternate frame for blinking
+            } else {
+                frameX = (this.frameIndex + 8) * this.frameWidth; // Normal frightened frame
+            }
+        } else {
+            frameX = (this.frameIndex + 8) * this.frameWidth; // Normal frightened frame
+        }
+        
+        }
+        if(this.isDead)
+        {
+            frameYGrid = 5 * this.frameHeight;
+            
+            updatedIndex = 8;
+            if(this.direction === "left")
+                {
+                    updatedIndex = 9;
+                } else if(this.direction === "up")
+                {
+                    updatedIndex = 10;
+                } else if(this.direction === "down")
+                {
+                  updatedIndex = 11;
+                }
+                frameX = updatedIndex * this.frameWidth
+            
+        }
 
         // Draw the current frame from the sprite sheet
         this.mundo.ctx.drawImage(
@@ -72,6 +126,7 @@ class Ghost {
     }
 
     updateAnimation() {
+        if(this.isDead) return;
         const now = Date.now();
 
         // Change the frame every 200ms (adjust the value for faster/slower animation)
@@ -85,6 +140,12 @@ class Ghost {
         }
     }
 
+    getEaten()
+    {
+        this.isDead = true;
+        this.speed = this.ORIGINAL_SPEED;
+    }
+
     canMoveTo(gridX, gridY) {
         return (
             gridX >= 0 &&
@@ -92,6 +153,7 @@ class Ghost {
             gridY < this.mundo.transparency.length && // Ensure gridY is within bounds
             gridX < this.mundo.transparency[gridY].length && // Ensure gridX is within bounds
             (this.mundo.transparency[gridY][gridX] === 1 ||
+                (this.mundo.transparency[gridY][gridX] === 2 && ((this.isDead || this.inGhostHouse)) && !this.isFrighted) ||
                 this.mundo.transparency[gridY][gridX] === 3 ||
                 this.mundo.transparency[gridY][gridX] === 4 ||
                 this.mundo.transparency[gridY][gridX] === 5) // Check if the cell is walkable
@@ -122,13 +184,20 @@ class Ghost {
 
         const isAlignedX = Math.abs(this.x - targetGridX) < this.speed;
         const isAlignedY = Math.abs(this.y - targetGridY) < this.speed;
-
         if (isAlignedX && isAlignedY) {
             this.setTargetTiles(); // Update target positions based on Pacman's position
             if (this.isFrighted) {
                 this.takeRandomTurn(); // Take a random turn if frightened
             } else {
                 this.findBestDirection(); // Find the best direction to move
+            }
+
+            if (this.gridX - 1 < 0) {
+                this.gridX = this.mundo.transparency[0].length - 1; // Wrap to the right edge
+                this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
+            } else if (this.gridX + 1 >= this.mundo.transparency[0].length) {
+                this.gridX = 0; // Wrap to the left edge
+                this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
             }
         }
     }
@@ -137,7 +206,6 @@ class Ghost {
         const validDirections = this.checkSurroundingTiles();
         const newDirections = [];
 
-        // Exclude the direction it just came from
         const oppositeDirection = this.invertDirection(this.lastValidDirection);
 
         for (const dir of validDirections) {
@@ -160,33 +228,21 @@ class Ghost {
             case "up":
                 if (this.canMoveTo(this.gridX, this.gridY - 1)) {
                     this.gridY--;
-                } else if (this.mundo.transparency[this.gridY - 1] && this.mundo.transparency[this.gridY - 1][this.gridX] === 5) {
-                    // Wrap around to the bottom
-                    this.gridY = this.mundo.transparency.length - 1; // Wrap to the bottom
                 }
                 break;
             case "down":
                 if (this.canMoveTo(this.gridX, this.gridY + 1)) {
                     this.gridY++;
-                } else if (this.mundo.transparency[this.gridY + 1] && this.mundo.transparency[this.gridY + 1][this.gridX] === 5) {
-                    // Wrap around to the top
-                    this.gridY = 0; // Wrap to the top
                 }
                 break;
             case "left":
                 if (this.canMoveTo(this.gridX - 1, this.gridY)) {
                     this.gridX--;
-                } else if (this.canMoveTo(this.gridX - 1, this.gridY) && this.mundo.transparency[this.gridY][this.gridX - 1] === 5) {
-                    // Wrap around to the right edge
-                    this.gridX = this.mundo.transparency[0].length - 1; // Wrap to the right
                 }
                 break;
             case "right":
                 if (this.canMoveTo(this.gridX + 1, this.gridY)) {
                     this.gridX++;
-                } else if (this.canMoveTo(this.gridX + 1, this.gridY) && this.mundo.transparency[this.gridY][this.gridX + 1] === 5) {
-                    // Wrap around to the left edge
-                    this.gridX = 0; // Wrap to the left
                 }
                 break;
         }
@@ -242,7 +298,17 @@ class Ghost {
         this.direction = this.invertDirection(this.direction);
         this.findBestDirection();
         this.isFrighted = true;
+        this.speed = this.ORIGINAL_SPEED * 0.5;
     }
+
+    revertToNormal()
+    {
+        this.findBestDirection();
+        this.isFrighted = false;
+        this.speed = this.ORIGINAL_SPEED;
+        this.blink = false;
+    }
+    
 
     checkSurroundingTiles() {
         const directions = ["up", "down", "left", "right"];
@@ -269,17 +335,30 @@ class Ghost {
             this.targetGridX = this.scatterCol;
             this.targetGridY = this.scatterRow;
         }
+        if(this.isDead) {
+            this.targetGridX = this.houseX;
+            this.targetGridY = this.houseY;
+            if(this.gridX == this.targetGridX && this.gridY == this.targetGridY)
+            {
+                this.isDead = false;
+                this.inGhostHouse = true;
+            }
+        }
+
     }
 
     checkIfHit()
     {
         if ((this.targetGridX === this.gridX) && (this.targetGridY === this.gridY)) {
-            this.mundo.pacman.isHit = true;
+            if(!this.isDead)
+            {
+                this.mundo.pacman.isHit = true;
+            }
         }  
     }
 
     updateMode() {
-        if (this.mundo.pacman.isPaused || this.isFrighted) return;
+        if (this.mundo.pacman.isPaused || this.isFrighted || this.isDead) return;
 
         const now = Date.now();
         this.currentModeDuration += now - this.modeSwitchTime;
@@ -296,7 +375,28 @@ class Ghost {
             }
         }
     }
-
+    exitHouseAnim()
+    {
+        this.targetGridX = 14;
+        this.targetGridY = 14;
+        //this.findBestDirection();
+        this.inGhostHouse = false; // Mark the ghost as out of the house
+    }
+    exitGhotsHouse()
+    {
+        if(this.inGhostHouse)
+        {  
+            if(this.gridX < this.gridXHouse || this.gridX > this.gridXHouse)
+            {
+                this.direction = this.invertDirection(this.direction);
+            }
+            if(this.mundo.pacman.dotsEaten >= this.dotsEatenToExit){
+                setTimeout(() => {
+                    this.exitHouseAnim(); // Move to scatter row
+                }, 4000); // Delay of 1 second before exiting
+            }
+        }
+    }
     update() {
         this.updatePosition(); // Update ghost's position
         this.draw(); // Draw ghost
@@ -305,20 +405,23 @@ class Ghost {
             this.updateMode();
             this.updateAnimation();
         }
+    
         this.checkIfHit();
-        //this.mundo.drawTile(this.gridX, this.gridY, this.color);
+        this.exitGhotsHouse();
+        this.mundo.drawTile(this.gridX, this.gridY, this.color);
     }
 }
 
 class Blinky extends Ghost {
     constructor(mundo) {
-        super(mundo, 14, 14, 26, 0, "red", 4);
+        super(mundo, 14, 14, 14, 17, 26, 0, "red", 4, 0);
     }
 }
 
 class Pinky extends Ghost {
     constructor(mundo) {
-        super(mundo, 12, 14, 3, 0, "pink", 5);
+        super(mundo, 14, 17, 14, 17, 3, 0, "pink", 5, 0);
+        this.inGhostHouse = true;
     }
 
     setTargetTiles() {
@@ -348,7 +451,8 @@ class Pinky extends Ghost {
 
 class Inky extends Ghost {
     constructor(mundo) {
-        super(mundo, 16, 14, 27, 35, "lightblue", 6);
+        super(mundo, 12, 17, 12, 17, 27, 35, "lightblue", 6, 70);
+        this.inGhostHouse = true;
     }
 
     setTargetTiles() {
@@ -389,7 +493,8 @@ class Inky extends Ghost {
 
 class Clyde extends Ghost {
     constructor(mundo) {
-        super(mundo, 18, 14, 0, 35, "orange", 7);
+        super(mundo, 16, 17, 16, 17, 0, 35, "orange", 7, 90);
+        this.inGhostHouse = true;
     }
 
     setTargetTiles() {
