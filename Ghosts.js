@@ -411,7 +411,7 @@ class Ghost {
     
         this.checkIfHit();
         this.exitGhotsHouse();
-        this.mundo.drawTile(this.gridX, this.gridY, this.color);
+       // this.mundo.drawTile(this.gridX, this.gridY, this.color);
     }
 }
 

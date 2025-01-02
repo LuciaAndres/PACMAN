@@ -63,6 +63,7 @@ class Pacman {
         this.initialMoveSound = new Audio('./Pacman Sounds/ghost-siren.mp3');
         this.initialMoveSound.loop = true; // Configurar el audio para que se repita
 
+        this.vidas=3;
     }
 
     resetGame() {
@@ -122,6 +123,31 @@ class Pacman {
                 this.mundo.transparency[gridY][gridX] === 5) // Check if the cell is walkable
         );
     }
+    loseLife() {
+        this.vidas--;
+
+        // Actualizar la visualización de las vidas en el DOM
+        const livesElement = document.getElementById("vidas");
+        if (livesElement) {
+            livesElement.textContent = `Vidas: ${this.vidas}`;
+        }
+
+        if (this.vidas == 0) {
+            resetGame();
+        } else {
+            // Reiniciar posición de Pac-Man y detener el golpe
+            this.gridX = 14;
+            this.gridY = 26;
+            this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
+            this.y = this.gridY * this.gridSize + this.gridSize / 2;
+            this.isHit = false;
+            this.isPaused = true; // Pausar para dar tiempo antes de reanudar
+            setTimeout(() => {
+                this.isPaused = false; // Reanudar después de un breve retraso
+            }, 2000);
+        }
+    }
+
     // Update Pacman's position
     async updatePosition() {
         if (this.isPaused) return;
@@ -206,11 +232,15 @@ class Pacman {
     eatPellet() {
         const currentTile = this.mundo.transparency[this.gridY][this.gridX];
         if (currentTile === 1 || currentTile === 4) { // Pellet or Power Pellet
+            
             /*const sound = new Audio('./Pacman Sounds/pac-man-waka-waka.mp3'); // Ruta del archivo de audio
-            sound.volume = 0.5; //Le bajamos el volumen ya que sino suena muy alto
+            sound.volume = 0.1; //Le bajamos el volumen ya que sino suena muy alto
             sound.play(); // Reproducir el sonido*/
+
             const scoreIncrement = currentTile === 1 ? 10 : 50;
             this.score += scoreIncrement;
+
+            document.getElementById("pts").textContent = `Puntos: ${this.score}`; 
             this.mundo.transparency[this.gridY][this.gridX] = 3; // Change tile to empty
             if (currentTile === 4) {
                 this.powerPelletFunc(); // Activate power pellet effect  
@@ -299,7 +329,7 @@ class Pacman {
 
         // If the death animation is done (e.g., after 2 seconds), reset the game or stop drawing
         if (this.deathIndex == 13) {
-            this.resetGame();
+            this.loseLife();
         } else {
             const sound = new Audio('./Pacman Sounds/pacman-dies.mp3'); // Ruta del archivo de audio
             sound.volume = 0.1; //Le bajamos el volumen ya que sino suena muy alto
@@ -343,6 +373,7 @@ class Pacman {
                 if (!ghost.isFrighted) {
                     if (!ghost.isDead) {
                         this.isHit = true;
+                        this.loseLife();
                     }
                 }
                 else {
@@ -359,7 +390,7 @@ class Pacman {
 
     update() {
         if (!this.isPaused) {
-            this.checkCollisionsWithGhosts
+            this.checkCollisionsWithGhosts();
             this.updatePosition();
             this.updateAnimation(); // Update Pacman's position
         }

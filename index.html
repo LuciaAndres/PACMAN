@@ -13,6 +13,12 @@
           font-weight: normal;
           font-style: normal;
         }
+        @font-face {
+          font-family: 'digital';
+          src: url('./digital.TTF') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+        }
 
         body {
           margin: 0;
@@ -59,10 +65,19 @@
         .pts{
             color: yellow ;
             position: relative;
-            font-family: 'PacFont', sans-serif;
+            font-family: 'digital', sans-serif;
             display: flex;
             font-size: 20px;
             justify-content: right;
+
+        }
+        .vidas{
+            color: yellow ;
+            position: relative;
+            font-family: 'digital', sans-serif;
+            display: flex;
+            font-size: 20px;
+            justify-content: left;
 
         }
         button{
@@ -156,13 +171,15 @@
         
     <div class="contenedora">
         <div class="canvas-principal">
-            <div class="pts">Puntos</div>
+            <div class="pts" id="pts">Puntos</div>
+            <div class="vidas" id="vidas">Vidas: 3</div>
             <canvas id="canvas-principal" width="448 " height="576"></canvas>
               <button id="play">Jugar</button>
             <div style="display:none;">
                 <img id="map" src="./Pacman Sprites/mapa.png" />
                 <img id="spritesheet" src="./Pacman Sprites/personajes.png" />
             </div>
+            
     </div>
     <script>
         // Efecto parallax vinculado al movimiento del mouse
