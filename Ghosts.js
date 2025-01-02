@@ -336,6 +336,9 @@ class Ghost {
             this.targetGridY = this.scatterRow;
         }
         if(this.isDead) {
+            const sound = new Audio('./Pacman Sounds/ghost-eyes.mp3'); // Ruta del archivo de audio
+            sound.volume = 0.3; //Le bajamos el volumen ya que sino suena muy alto
+            sound.play();
             this.targetGridX = this.houseX;
             this.targetGridY = this.houseY;
             if(this.gridX == this.targetGridX && this.gridY == this.targetGridY)

@@ -7,18 +7,39 @@
     <meta name="autor" content="Lucas Joglar y Lucía Andrés" />
     <title>ᗧ···ᗣ···ᗣ··</title>
     <style>
+         @font-face {
+          font-family: 'PacFont';
+          src: url('./PAC-FONT.TTF') format('truetype');
+          font-weight: normal;
+          font-style: normal;
+        }
+
         body {
-            background-color: grey;
-            color: white;
-            margin: 0;
-            font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          height: 200vh; /* Simula un scroll más largo */
+          background: #000; /* Color de respaldo */
+          overflow-x: hidden;
         }
 
         .encabezado {
+            font-family: 'PacFont', sans-serif;
             display: flex;
             justify-content: center;
             gap: 20px;
             padding: 15px;
+            color: yellow;
+
+        }
+         .background {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: url('prueba.jpg') no-repeat center center fixed;
+          background-size: cover;
+          z-index: -2; /* Ubicación detrás de todo */
         }
 
         .contenedora {
@@ -28,7 +49,6 @@
             padding: 20px;
             gap: 20px;
         }
-
         .canvas-principal {
             background-color: black;
             position: relative;
@@ -36,29 +56,131 @@
             height: 576px;
             border: 2px solid black;
         }
+        .pts{
+            color: yellow ;
+            position: relative;
+            font-family: 'PacFont', sans-serif;
+            display: flex;
+            font-size: 20px;
+            justify-content: right;
+
+        }
+        button{
+            position: absolute;
+            top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            font-family: 'PacFont', sans-serif;
+            padding: 20px 30px; font-size: 18px; 
+            background-color:yellow; 
+            color: black;
+            border: none; cursor: pointer; z-index: 10;">
+        }
+        button: hover{
+            position: absolute;
+            transform: scale(1.05); 
+            top: 50%; left: 50%; 
+            font-family: 'PacFont', sans-serif;
+            padding: 20px 30px; font-size: 18px; 
+            background-color:black; 
+            color: yellow;
+            border: none; cursor: pointer; z-index: 10;">
+        }
+        /* Contenedor de elementos animados */
+        .parallax-layer {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none; /* Evita interferencias con clics */
+        }
+
+        .square {
+          position: absolute;
+          width: 30px;
+          height: 30px;
+          background-color: rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(255, 255, 255, 0.7);
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        /* Diferentes capas de cuadrados con velocidades distintas */
+        .layer1 .square {
+          animation: parallax 20s linear infinite;
+        }
+
+        .layer2 .square {
+          animation: parallax 15s linear infinite;
+        }
+
+        .layer3 .square {
+          animation: parallax 10s linear infinite;
+        }
+
+        /* Animación de los cuadrados */
+        @keyframes parallax {
+          0% {
+            transform: translateY(-100px) translateX(-50px);
+          }
+          50% {
+            transform: translateY(300px) translateX(50px);
+          }
+          100% {
+            transform: translateY(-100px) translateX(-50px);
+          }
     </style>
 </head>
 
 <body>
     <!--Esta la página subida a github
-        página:https://luciaandres.github.io/Practica2Fundamentos/
-        github:https://github.com/LuciaAndres/Practica2Fundamentos-->
+        página:https://luciaandres.github.io/PACMAN/
+        github:https://github.com/LuciaAndres/PACMAN-->
+    <div class="background"></div>
+      <!-- Capas del efecto parallax -->
+      <div class="parallax-layer layer1">
+        <div class="square" style="top: 20%; left: 10%;"></div>
+        <div class="square" style="top: 50%; left: 30%;"></div>
+      </div>
+      <div class="parallax-layer layer2">
+        <div class="square" style="top: 10%; left: 50%;"></div>
+        <div class="square" style="top: 70%; left: 80%;"></div>
+      </div>
+      <div class="parallax-layer layer3">
+        <div class="square" style="top: 40%; left: 20%;"></div>
+        <div class="square" style="top: 60%; left: 70%;"></div>
+    </div>
 
     <div class="encabezado">
         <h1>Pac Man</h1>
     </div>
-    
+        
     <div class="contenedora">
         <div class="canvas-principal">
+            <div class="pts">Puntos</div>
             <canvas id="canvas-principal" width="448 " height="576"></canvas>
+              <button id="play">Jugar</button>
             <div style="display:none;">
                 <img id="map" src="./Pacman Sprites/mapa.png" />
                 <img id="spritesheet" src="./Pacman Sprites/personajes.png" />
             </div>
-        </div>
-        <script src="Pacman.js"></script>
-        <script src="Ghosts.js"></script>
-        <script src="World.js"></script>
+    </div>
+    <script>
+        // Efecto parallax vinculado al movimiento del mouse
+        document.addEventListener('mousemove', (event) => {
+        const layers = document.querySelectorAll('.parallax-layer');
+        const x = (event.clientX / window.innerWidth) * 2 - 1; // Normaliza entre -1 y 1
+            const y = (event.clientY / window.innerHeight) * 2 - 1;
+
+            layers.forEach((layer, index) => {
+            const depth = (index + 1) * 20; // Ajusta la profundidad
+            layer.style.transform = `translate(${x * depth}px, ${y * depth}px)`;
+            });
+        });
+    </script>
+    <script src="Pacman.js"></script>
+    <script src="Ghosts.js"></script>
+    <script src="World.js"></script>
+
 
     </div>
 </body>

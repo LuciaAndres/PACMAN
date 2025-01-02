@@ -1,3 +1,4 @@
+
 class Pacman {
     constructor(mundo) {
         this.mundo = mundo;
@@ -32,6 +33,35 @@ class Pacman {
 
         this.deathIndex = 0;
         this.dotsEaten = 0;
+        // Elementos del DOM
+        const playButton = document.getElementById('play');
+        playButton.addEventListener('click', () => {
+            // Ocultar el botón
+            playButton.style.display = 'none';
+
+            //Reproducir un sonido inicial
+            const startSound = new Audio('./Pacman Sounds/pacman-song.mp3');
+            startSound.play();
+
+            // Si necesitas que el sonido termine antes de habilitar teclas:
+            startSound.addEventListener('ended', () => {
+            console.log("Sonido terminado. Controles habilitados.");
+                    this.canMove = true;
+            });
+         });
+
+        // Nueva bandera para el primer movimiento
+        this.canMove = false; // Nueva bandera para habilitar/deshabilitar teclas
+
+        // Sonido inicial
+        this.initialSound = new Audio('./Pacman Sounds/pacman-song.mp3');
+
+
+        this.hasMoved = false;
+
+        // Instancia del sonido del movimiento inicial
+        this.initialMoveSound = new Audio('./Pacman Sounds/ghost-siren.mp3');
+        this.initialMoveSound.loop = true; // Configurar el audio para que se repita
 
     }
 
@@ -41,10 +71,16 @@ class Pacman {
 
     // Handle key presses for direction and pause
     handleKeyPress(event) {
+         if (!this.canMove) return; // Ignora las teclas si el movimiento no está habilitado
+
+
         // Check for pause/unpause
         if (event.key === "p") { // Press 'p' to toggle pause
             this.isPaused = !this.isPaused;
+            this.initialMoveSound.pause();
             return; // Exit early if just toggling pause
+        }else {
+            this.initialMoveSound.play(); // Reanudar el audio al reanudar el juego
         }
 
         // Change direction based on arrow keys or WASD
@@ -63,8 +99,14 @@ class Pacman {
         if (newDirection) {
             this.nextDirection = newDirection;
             this.isPaused = false;
-        }
 
+            if (!this.hasMoved) {
+                this.initialMoveSound.play(); // Iniciar el audio
+                this.hasMoved = true; // Marcar que Pacman ya se movió
+
+            }
+
+        }
 
     }
 
@@ -161,10 +203,12 @@ class Pacman {
 
         }
     }
-
     eatPellet() {
         const currentTile = this.mundo.transparency[this.gridY][this.gridX];
         if (currentTile === 1 || currentTile === 4) { // Pellet or Power Pellet
+            /*const sound = new Audio('./Pacman Sounds/pac-man-waka-waka.mp3'); // Ruta del archivo de audio
+            sound.volume = 0.5; //Le bajamos el volumen ya que sino suena muy alto
+            sound.play(); // Reproducir el sonido*/
             const scoreIncrement = currentTile === 1 ? 10 : 50;
             this.score += scoreIncrement;
             this.mundo.transparency[this.gridY][this.gridX] = 3; // Change tile to empty
@@ -178,6 +222,7 @@ class Pacman {
     }
 
     powerPelletFunc() {
+
         if (this.frightenedTimer) {
             clearTimeout(this.frightenedTimer);
         }
@@ -185,13 +230,21 @@ class Pacman {
         for (const ghost of this.mundo.ghosts) {
             ghost.getFrightened();
         }
-
         this.frightenedTimerStart = Date.now();
 
+
+        const sound = new Audio('./Pacman Sounds/ghost-scared.mp3'); // Ruta del archivo de audio
+        sound.volume = 0.2; //Le bajamos el volumen ya que sino suena muy alto
+        sound.loop= true;
+        sound.play(); // Reproducir el sonido*/
+
+        
         this.frightenedTimer = setTimeout(() => {
             for (const ghost of this.mundo.ghosts) {
                 ghost.revertToNormal(); // Revert ghost state back to normal
             }
+            sound.pause();     // Pausar el sonido
+            sound.currentTime = 0;
             this.frightenedTimer = null; // Clear the timer reference
         }, 10000);
     }
@@ -248,6 +301,9 @@ class Pacman {
         if (this.deathIndex == 13) {
             this.resetGame();
         } else {
+            const sound = new Audio('./Pacman Sounds/pacman-dies.mp3'); // Ruta del archivo de audio
+            sound.volume = 0.1; //Le bajamos el volumen ya que sino suena muy alto
+            sound.play(); // Reproducir el sonido
             this.updateDeathAnimation(); // Update the death animation frame
             this.drawDeathFrame(); // Draw the death animation frame
         }
@@ -290,7 +346,12 @@ class Pacman {
                     }
                 }
                 else {
-                    ghost.getEaten();
+                    if(!ghost.isDead){
+                        ghost.getEaten();
+                        const sound = new Audio('./Pacman Sounds/pacman-eating-ghost.mp3'); // Ruta del archivo de audio
+                        sound.volume = 0.2; //Le bajamos el volumen ya que sino suena muy alto
+                        sound.play(); // Reproducir el sonido
+                    }
                 }
             }
         }
