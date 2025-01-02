@@ -217,8 +217,4 @@ class Mundo {
     }
 }
 
-
-
-
-
 const mundo = new Mundo();
