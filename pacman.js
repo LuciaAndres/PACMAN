@@ -135,7 +135,7 @@ class Pacman {
         }
 
         if (this.vidas == 0) {
-            resetGame();
+            this.showWLoseMessage();
         } else {
             // Reiniciar posición de Pac-Man y detener el golpe
             this.gridX = 14;
@@ -259,6 +259,9 @@ class Pacman {
     }
 
     showWinMessage() {
+        // Pausar el juego
+        this.isPaused = true;
+        this.initialMoveSound.pause();
         // Mostrar un mensaje en pantalla
         const winMessage = document.createElement("div");
         winMessage.textContent = "¡Juego ganado!";
@@ -278,15 +281,35 @@ class Pacman {
         sound.volume = 0.2; //Le bajamos el volumen ya que sino suena muy alto
         sound.play(); // Reproducir el sonido*/
 
+        // Opcional: reiniciar el juego después de un tiempo
+        setTimeout(() => {
+            this.resetGame();
+        }, 6000); // Reiniciar después de 5 segundos
+    }
+    showWLoseMessage() {
+        this.initialMoveSound.pause();
         // Pausar el juego
         this.isPaused = true;
+        // Mostrar un mensaje en pantalla
+        const winMessage = document.createElement("div");
+        winMessage.textContent = "¡GameOver!";
+        winMessage.style.position = "absolute";
+        winMessage.style.top = "50%";
+        winMessage.style.left = "50%";
+        winMessage.style.transform = "translate(-50%, -50%)";
+        winMessage.style.padding = "20px";
+        winMessage.style.backgroundColor = "yellow";
+        winMessage.style.color = "black";
+        winMessage.style.fontSize = "24px";
+        winMessage.style.borderRadius = "10px";
+        winMessage.style.textAlign = "center";
+        document.body.appendChild(winMessage);
 
         // Opcional: reiniciar el juego después de un tiempo
         setTimeout(() => {
             this.resetGame();
-        }, 7000); // Reiniciar después de 5 segundos
+        }, 1000); // Reiniciar después de 5 segundos
     }
-
     powerPelletFunc() {
 
         if (this.frightenedTimer) {
