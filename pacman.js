@@ -67,6 +67,8 @@ class Pacman {
     }
 
     resetGame() {
+        this.vidas=3;
+        this.score=0;
         location.reload();
     }
 
@@ -124,7 +126,7 @@ class Pacman {
         );
     }
     loseLife() {
-        this.vidas--;
+        this.vidas-=1;
 
         // Actualizar la visualización de las vidas en el DOM
         const livesElement = document.getElementById("vidas");
@@ -246,9 +248,43 @@ class Pacman {
                 this.powerPelletFunc(); // Activate power pellet effect  
             }
             this.dotsEaten++;
+            if (this.score >= 2600) {
+                const startSound = new Audio('./Pacman Sounds/pacman_win.mp3');
+                startSound.play();
+                this.showWinMessage(); // Llamar la función para mostrar el mensaje de victoria
+            }
             return true;
         }
         return false;
+    }
+
+    showWinMessage() {
+        // Mostrar un mensaje en pantalla
+        const winMessage = document.createElement("div");
+        winMessage.textContent = "¡Juego ganado!";
+        winMessage.style.position = "absolute";
+        winMessage.style.top = "50%";
+        winMessage.style.left = "50%";
+        winMessage.style.transform = "translate(-50%, -50%)";
+        winMessage.style.padding = "20px";
+        winMessage.style.backgroundColor = "yellow";
+        winMessage.style.color = "black";
+        winMessage.style.fontSize = "24px";
+        winMessage.style.borderRadius = "10px";
+        winMessage.style.textAlign = "center";
+        document.body.appendChild(winMessage);
+
+        const sound = new Audio('./Pacman Sounds/pacman_win.mp3'); // Ruta del archivo de audio
+        sound.volume = 0.2; //Le bajamos el volumen ya que sino suena muy alto
+        sound.play(); // Reproducir el sonido*/
+
+        // Pausar el juego
+        this.isPaused = true;
+
+        // Opcional: reiniciar el juego después de un tiempo
+        setTimeout(() => {
+            this.resetGame();
+        }, 7000); // Reiniciar después de 5 segundos
     }
 
     powerPelletFunc() {
