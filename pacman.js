@@ -126,7 +126,9 @@ class Pacman {
         );
     }
     loseLife() {
-        this.vidas-=1;
+        if(this.vidas>0){ //this.vidas DENTRO del if seria innecesario si no fuese porque las vidas se vuelven negativas sin el
+            this.vidas--; 
+        }
 
         // Actualizar la visualización de las vidas en el DOM
         const livesElement = document.getElementById("vidas");
@@ -266,7 +268,7 @@ class Pacman {
         const winMessage = document.createElement("div");
         winMessage.textContent = "¡Juego ganado!";
         winMessage.style.position = "absolute";
-        winMessage.style.top = "50%";
+        winMessage.style.top = "70%";
         winMessage.style.left = "50%";
         winMessage.style.transform = "translate(-50%, -50%)";
         winMessage.style.padding = "20px";
@@ -284,7 +286,7 @@ class Pacman {
         // Opcional: reiniciar el juego después de un tiempo
         setTimeout(() => {
             this.resetGame();
-        }, 6000); // Reiniciar después de 5 segundos
+        }, 5000); // Reiniciar después de 5 segundos
     }
     showWLoseMessage() {
         this.initialMoveSound.pause();
@@ -294,7 +296,7 @@ class Pacman {
         const winMessage = document.createElement("div");
         winMessage.textContent = "¡GameOver!";
         winMessage.style.position = "absolute";
-        winMessage.style.top = "50%";
+        winMessage.style.top = "70%";
         winMessage.style.left = "50%";
         winMessage.style.transform = "translate(-50%, -50%)";
         winMessage.style.padding = "20px";
@@ -308,7 +310,7 @@ class Pacman {
         // Opcional: reiniciar el juego después de un tiempo
         setTimeout(() => {
             this.resetGame();
-        }, 1000); // Reiniciar después de 5 segundos
+        }, 2000); // Reiniciar después de 5 segundos
     }
     powerPelletFunc() {
 
@@ -431,8 +433,7 @@ class Pacman {
             if (ghost.gridX == this.gridX && ghost.gridY == this.gridY) {
                 if (!ghost.isFrighted) {
                     if (!ghost.isDead) {
-                        this.isHit = true;
-                        this.loseLife();
+                        this.isHit = true;     
                     }
                 }
                 else {
