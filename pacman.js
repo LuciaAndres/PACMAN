@@ -237,7 +237,7 @@ class Pacman {
         const currentTile = this.mundo.transparency[this.gridY][this.gridX];
         if (currentTile === 1 || currentTile === 4) { // Pellet or Power Pellet
             
-            /*const sound = new Audio('./Pacman Sounds/pac-man-waka-waka.mp3'); // Ruta del archivo de audio
+            const sound = new Audio('./Pacman Sounds/pac-man-waka-waka.mp3'); // Ruta del archivo de audio
             sound.volume = 0.1; //Le bajamos el volumen ya que sino suena muy alto
             sound.play(); // Reproducir el sonido*/
 

@@ -4,13 +4,15 @@ class Ghost {
         this.gridX = gridX;
         this.gridY = gridY;
         this.gridSize = this.mundo.gridHeight;
-        this.gridXHouse = 14;
-        this.gridYHouse = 17;
+        this.gridXHouse = houseX;
+        this.gridYHouse = houseY;
         this.speed = 0.8 * this.mundo.pacman.speed;
         this.ORIGINAL_SPEED = this.speed;
         this.direction = "right";
         this.lastValidDirection = this.direction;
 
+        this.exitHouseX = 14;
+        this.exitHouseY = 14;
         this.currentFrame = 0; // 0 or 1, depending on which frame you're using
         this.frameWidth = 16;  // Width of a single frame
         this.frameHeight = 16; // Height of a single frame
@@ -26,8 +28,7 @@ class Ghost {
         this.scatterMode = true;
         this.scatterCol = scatterCol;
         this.scatterRow = scatterRow;
-        this.houseX = houseX;
-        this.houseY = houseY;
+
         this.x = (this.gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
         this.y = this.gridY * this.gridSize + this.gridSize / 2;
 
@@ -140,12 +141,17 @@ class Ghost {
         }
     }
 
-    getEaten()
-    {
+    getEaten() {
         this.isDead = true;
         this.speed = this.ORIGINAL_SPEED;
+        console.log(`${this.color} is eaten. Returning to the ghost house.`);
+        setTimeout(() => {
+            this.teleportTo(this.gridXHouse, this.gridYHouse); // Teleport back to the ghost house
+            this.isDead = false;
+            this.inGhostHouse = true;
+            console.log(`${this.color} is back in the ghost house.`);
+        }, 2000); // Delay for animation of ghost returning to the house
     }
-
     canMoveTo(gridX, gridY) {
         return (
             gridX >= 0 &&
@@ -339,8 +345,8 @@ class Ghost {
             const sound = new Audio('./Pacman Sounds/ghost-eyes.mp3'); // Ruta del archivo de audio
             sound.volume = 0.3; //Le bajamos el volumen ya que sino suena muy alto
             sound.play();
-            this.targetGridX = this.houseX;
-            this.targetGridY = this.houseY;
+            this.targetGridX = this.gridXHouse;
+            this.targetGridY = this.gridYHouse;
             if(this.gridX == this.targetGridX && this.gridY == this.targetGridY)
             {
                 this.isDead = false;
@@ -378,40 +384,42 @@ class Ghost {
             }
         }
     }
-    exitHouseAnim()
-    {
-        this.targetGridX = 14;
-        this.targetGridY = 14;
-        //this.findBestDirection();
-        this.inGhostHouse = false; // Mark the ghost as out of the house
-    }
-    exitGhotsHouse()
-    {
-        if(this.inGhostHouse)
-        {  
-            if(this.gridX < this.gridXHouse || this.gridX > this.gridXHouse)
-            {
-                this.direction = this.invertDirection(this.direction);
-            }
-            if(this.mundo.pacman.dotsEaten >= this.dotsEatenToExit){
-                setTimeout(() => {
-                    this.exitHouseAnim(); // Move to scatter row
-                }, 4000); // Delay of 1 second before exiting
-            }
+
+    exitHouseAnim() {
+        if (this.inGhostHouse && this.mundo.pacman.dotsEaten >= this.dotsEatenToExit) {
+            // Teleport the ghost to the exit row
+            this.teleportTo(this.exitHouseX, this.exitHouseY);
+            this.inGhostHouse = false; // Mark the ghost as outside the house
+            console.log(`${this.color} exited the house.`);
         }
     }
+
+    exitGhotsHouse() {
+        if (this.inGhostHouse && this.mundo.pacman.dotsEaten >= this.dotsEatenToExit) {
+            console.log(`${this.color} preparing to exit. Dots Eaten: ${this.mundo.pacman.dotsEaten}, Required: ${this.dotsEatenToExit}`);
+            this.exitHouseAnim(); // Trigger exit animation
+        }
+    }
+
     update() {
-        this.updatePosition(); // Update ghost's position
-        this.draw(); // Draw ghost
-        if(!this.mundo.pacman.isPaused)
+        if(this.inGhostHouse)
         {
+            this.exitGhotsHouse();
+        } else {
+            this.updatePosition(); // Update ghost's position
             this.updateMode();
-            this.updateAnimation();
         }
-    
+        this.updateAnimation();
         this.checkIfHit();
-        this.exitGhotsHouse();
-        //this.mundo.drawTile(this.gridX, this.gridY, this.color);
+        this.draw(); // Draw ghost
+    }
+
+    teleportTo(gridX, gridY) {
+        this.gridX = gridX;
+        this.gridY = gridY;
+        this.x = (gridX * this.gridSize + this.gridSize / 2) - this.gridSize / 2;
+        this.y = gridY * this.gridSize + this.gridSize / 2;
+        console.log(`${this.color} teleported to (${gridX}, ${gridY}).`);
     }
 }
 
@@ -423,7 +431,7 @@ class Blinky extends Ghost {
 
 class Pinky extends Ghost {
     constructor(mundo) {
-        super(mundo, 14, 17, 14, 17, 3, 0, "pink", 5, 0);
+        super(mundo, 14, 17, 14, 17, 3, 0, "pink", 5, 10);
         this.inGhostHouse = true;
     }
 
@@ -456,6 +464,7 @@ class Inky extends Ghost {
     constructor(mundo) {
         super(mundo, 12, 17, 12, 17, 27, 35, "lightblue", 6, 70);
         this.inGhostHouse = true;
+        this.direction = "left";
     }
 
     setTargetTiles() {
