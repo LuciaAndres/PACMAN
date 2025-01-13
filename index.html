@@ -132,7 +132,25 @@
         .layer3 .square {
           animation: parallax 10s linear infinite;
         }
+        #mute-button {
+            position: absolute;
+            top: 10px; /* Ajusta esta posición */
+            right: 10px; /* Ajusta esta posición */
+            z-index: 20; /* Asegúrate de que esté por encima de otros elementos */
+            font-family: 'PacFont', sans-serif;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: yellow;
+            color: black;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
 
+        #mute-button:hover {
+            background-color: black;
+            color: yellow;
+        }
         /* Animación de los cuadrados */
         @keyframes parallax {
           0% {
@@ -144,6 +162,7 @@
           100% {
             transform: translateY(-100px) translateX(-50px);
           }
+
     </style>
 </head>
 
@@ -175,7 +194,7 @@
         <div class="canvas-principal">
             <canvas id="canvas-principal" width="448 " height="576"></canvas>
               <button id="play">Jugar</button>
-
+              <button id="mute-button">Partial Mute</button>
             <div style="display:none;">
                 <img id="map" src="./Pacman Sprites/mapa.png" />
                 <img id="spritesheet" src="./Pacman Sprites/personajes.png" />

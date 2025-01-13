@@ -49,6 +49,29 @@ class Pacman {
                     this.canMove = true;
             });
          });
+        let isMuted = false;
+        const muteButton = document.getElementById('mute-button');
+        const allSounds = []; // Aquí almacenaremos todas las instancias de Audio
+
+        // Sobrecargar el constructor de Audio para registrar cada sonido
+        const OriginalAudio = Audio;
+        window.Audio = function (...args) {
+            const sound = new OriginalAudio(...args);
+            allSounds.push(sound);
+            return sound;
+        };
+
+        muteButton.addEventListener('click', () => {
+            isMuted = !isMuted;
+
+            // Cambiar el estado de todos los sonidos
+            allSounds.forEach(sound => {
+                sound.muted = isMuted;
+            });
+
+            // Cambiar el texto del botón
+            muteButton.textContent = isMuted ? "Unmute" : "Partial Mute";
+        });
 
         // Nueva bandera para el primer movimiento
         this.canMove = false; // Nueva bandera para habilitar/deshabilitar teclas
